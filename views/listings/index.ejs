@@ -1,0 +1,33 @@
+<% layout("/layouts/boilerplate.ejs") %>
+<div id="filters" class="container-fluid py-3">
+    <div class="d-flex flex-wrap justify-content-center gap-3 w-100">
+        <div class="filter text-center p-3 bg-light border rounded shadow-sm w-100">
+            <i class="fa-solid fa-fire fa-2x text-danger"></i>
+            <a href="/listings" class="text-decoration-none"> 
+                <p class="mt-2">All listings</p>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row row-cols-lg-3 row-cols-md-3 row-cols-sm-1 mt-3">
+    <% for(let listing of allListings) { %>
+        <a href="/listings/<%= listing._id %>" class="listing-link">
+            <div class="card col">
+                <img 
+                    src="<%= listing.image.url %>" 
+                    class="card-img-top" 
+                    alt="listing_image" 
+                    style="height: 20rem;" 
+                />
+                <div class="card-img-overlay"></div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <b><%= listing.title %></b> <br>
+                        £<%= listing.price %> / night <br>
+                    </p>
+                </div>
+            </div>
+        </a>
+    <% } %>
+</div>
