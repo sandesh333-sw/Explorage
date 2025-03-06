@@ -1,4 +1,3 @@
-
 <style>
   .btn-search {
     background-color: #fe424d;
@@ -37,11 +36,11 @@
       <!-- Align these links on the right -->
       <div class="navbar-nav ms-auto">
         <a class="nav-link me-2" href="/listings/new">Host Your Home</a>
-        <% if(!currUser) { %>
+        <% if(typeof currUser === 'undefined' || !currUser) { %>
         <a class="nav-link me-2" href="/signup"><b>Sign Up</b></a>
         <a class="nav-link me-2" href="/login"><b>Log In</b></a>
         <% } %>
-        <% if(currUser) { %>
+        <% if(typeof currUser !== 'undefined' && currUser) { %>
         <a class="nav-link" href="/logout">Log Out</a>
         <% } %>
       </div>
