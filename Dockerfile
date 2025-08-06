@@ -1,28 +1,21 @@
-# Use the official Node.js runtime as the base image
+# Use official Node.js 18 Alpine image
 FROM node:18-alpine
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
+# Copy dependencies files first
 COPY package*.json ./
 
-# Install dependencies
+# Install only production dependencies
 RUN npm ci --only=production
 
-# Copy the rest of the application code
+# Copy the rest of the application
 COPY . .
 
-# Create a non-root user to run the application
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
 
-# Change ownership of the app directory to the nodejs user
-RUN chown -R nodejs:nodejs /app
-USER nodejs
-
-# Expose the port the app runs on
+# Expose app port
 EXPOSE 8080
 
-# Define the command to run the application
-CMD ["node", "app.js"] 
+# Start app
+CMD ["node", "app.js"]
