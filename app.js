@@ -99,6 +99,15 @@ app.get("/demeuser", async(req, res) => {
 app.get("/", (req, res) => {
     res.redirect("/listings");
 });
+
+// Health check endpoint for container orchestration
+app.get("/health", (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
 app.use("/listings", listingsRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/", userRouter);

@@ -34,6 +34,8 @@ Explorage is a full-featured accommodation booking platform that allows users to
 
 ## Installation
 
+### Option 1: Local Development
+
 1. Clone the repository
    ```
    git clone https://github.com/yourusername/explorage.git
@@ -57,19 +59,81 @@ Explorage is a full-featured accommodation booking platform that allows users to
 
 4. Start the development server
    ```
-   node app.js
+   npm run dev
    ```
 
 5. Visit `http://localhost:8080` in your browser
 
-## Deployment to Render
+### Option 2: Docker Development
+
+1. Clone the repository
+   ```
+   git clone https://github.com/yourusername/explorage.git
+   cd explorage
+   ```
+
+2. Create a `.env` file with your environment variables
+
+3. Build and run with Docker Compose
+   ```
+   docker-compose up --build
+   ```
+
+4. Visit `http://localhost:8080` in your browser
+
+### Option 3: Production Docker
+
+1. Build the Docker image
+   ```
+   docker build -t explorage .
+   ```
+
+2. Run the container
+   ```
+   docker run -p 8080:8080 --env-file .env explorage
+   ```
+
+## Docker
+
+### Building the Image
+```bash
+docker build -t explorage .
+```
+
+### Running with Docker Compose
+```bash
+docker-compose up --build
+```
+
+### Running the Container
+```bash
+docker run -p 8080:8080 --env-file .env explorage
+```
+
+## CI/CD Pipeline
+
+This project includes a GitHub Actions CI/CD pipeline that:
+- Runs tests on multiple Node.js versions
+- Builds and pushes Docker images to Docker Hub
+- Automatically deploys to Render
+
+### Setup GitHub Secrets
+Add these secrets to your GitHub repository:
+- `DOCKER_USERNAME`: Your Docker Hub username
+- `DOCKER_PASSWORD`: Your Docker Hub password/token
+- `RENDER_SERVICE_ID`: Your Render service ID
+- `RENDER_API_KEY`: Your Render API key
+
+## Deployment
+
+### Render (Current)
 
 1. Create a new Web Service on Render
 2. Connect your GitHub repository
 3. Configure the service:
    - **Build Command**: `npm install`
    - **Start Command**: `node app.js`
-   - **Node Version**: 14.x or higher
+   - **Node Version**: 18.x or higher
 
 4. Add the following environment variables:
    - `NODE_ENV`: production
@@ -81,6 +145,14 @@ Explorage is a full-featured accommodation booking platform that allows users to
    - `SECRET`: your_session_secret
 
 5. Deploy your application
+
+### Alternative Platforms
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on deploying to:
+- Railway
+- DigitalOcean App Platform
+- AWS ECS
+- Google Cloud Run
 
 ## MongoDB Atlas Setup
 
