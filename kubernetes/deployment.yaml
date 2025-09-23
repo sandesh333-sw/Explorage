@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: explorage-backend
+  namespace: explorage
+  labels:
+    app: explorage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: explorage
+  template:
+    metadata:
+      labels:
+        app: explorage
+    spec:
+      containers:
+      - name: backend
+        # For Minikube: build with `docker build -t explorage:1.0 .`
+        # For GKE: push to Artifact Registry and use gcr.io/<PROJECT_ID>/explorage:1.0
+        image: pulami/explorage:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: explorage-secrets
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
