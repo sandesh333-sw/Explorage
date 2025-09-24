@@ -1,4 +1,4 @@
 .env
 kubernetes/secret.yaml
 node_modules/
-**/.DS_Store
+**/.DS_Storekubernetes/secret.yaml
