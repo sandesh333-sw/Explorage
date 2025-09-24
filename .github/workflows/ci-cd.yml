@@ -69,7 +69,7 @@ jobs:
 
       - name: Authenticate to GCP
         env:
-          GKE_SA_KEY_JSON: ${{ secrets.GKE_SA_KEY }}
+          GKE_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
         run: |
           if [ -z "$GKE_SA_KEY_JSON" ]; then
             echo "GKE_SA_KEY secret is empty or not set" >&2
