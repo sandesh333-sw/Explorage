@@ -17,10 +17,9 @@ spec:
     spec:
       containers:
       - name: backend
-        # For Minikube: build with `docker build -t explorage:1.0 .`
-        # For GKE: push to Artifact Registry and use gcr.io/<PROJECT_ID>/explorage:1.0
-        image: pulami/explorage:1.0
-        imagePullPolicy: IfNotPresent
+        # Image is updated by CI/CD pipeline kustomize
+        image: gcr.io/GKE_PROJECT/explorage:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:

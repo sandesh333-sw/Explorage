@@ -23,14 +23,16 @@ Explorage is a full-featured accommodation booking platform that allows users to
 - **Maps**: Mapbox API
 - **Image Storage**: Cloudinary
 - **Session Management**: express-session with MongoDB store
-- **Deployment**: Render
+- **Deployment**: Google Kubernetes Engine (GKE), Docker
+- **CI/CD**: GitHub Actions
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher)
 - MongoDB Atlas account
 - Cloudinary account
 - Mapbox account
+- Google Cloud Platform account (for GKE deployment)
 
 ## Installation
 
@@ -110,55 +112,104 @@ docker-compose up --build
 docker run -p 8080:8080 --env-file .env explorage
 ```
 
+## Kubernetes Deployment
+
+Explorage is configured to run on Kubernetes with the following components:
+
+- **Deployment**: Manages pod replicas and updates
+- **Service**: Exposes the application to external traffic
+- **HorizontalPodAutoscaler**: Automatically scales pods based on CPU usage
+- **Secrets**: Manages sensitive environment variables
+
+### Local Kubernetes Testing (Minikube)
+
+1. Start Minikube
+   ```bash
+   minikube start
+   ```
+
+2. Create the namespace
+   ```bash
+   kubectl create namespace explorage
+   ```
+
+3. Apply Kubernetes manifests
+   ```bash
+   kubectl apply -f kubernetes/secret.yaml
+   kubectl apply -f kubernetes/deployment.yaml
+   kubectl apply -f kubernetes/service.yaml
+   kubectl apply -f kubernetes/hpa.yaml
+   ```
+
+### Google Kubernetes Engine Deployment
+
+The application is set up for automatic deployment to Google Kubernetes Engine through GitHub Actions CI/CD pipeline.
+
+#### Prerequisites for GKE Deployment
+
+1. Create a GKE cluster in your Google Cloud Project
+2. Create a service account with the following roles:
+   - Kubernetes Engine Developer
+   - Storage Admin
+
+3. Download the service account key JSON file
+
+4. Add the following secrets to your GitHub repository:
+   - `GKE_PROJECT`: Your Google Cloud Project ID
+   - `GKE_SA_KEY`: The content of your service account key JSON file
+
 ## CI/CD Pipeline
 
-This project includes a GitHub Actions CI/CD pipeline that:
-- Runs tests on multiple Node.js versions
-- Builds and pushes Docker images to Docker Hub
-- Automatically deploys to Render
+This project includes a streamlined GitHub Actions CI/CD pipeline that:
+- Runs tests on Node.js 20.x
+- Builds and pushes Docker images to Google Container Registry
+- Automatically deploys to Google Kubernetes Engine
 
-### Setup GitHub Secrets
+### GitHub Actions Workflow
+
+The CI/CD process follows these steps in a single job:
+
+2. **Build & Push**: Build the Docker image and push it to Google Container Registry
+3. **Deploy**: Apply the Kubernetes manifests to the GKE cluster
+
+The simplified workflow:
+- Combines all steps into a single job to reduce build time
+- Only deploys when pushing to the main branch
+- Uses conditional steps for deployment stages
+
+### Required GitHub Secrets
+
 Add these secrets to your GitHub repository:
-- `DOCKER_USERNAME`: Your Docker Hub username
-- `DOCKER_PASSWORD`: Your Docker Hub password/token
-- `RENDER_SERVICE_ID`: Your Render service ID
-- `RENDER_API_KEY`: Your Render API key
+- `GKE_PROJECT`: Your Google Cloud Project ID
+- `GKE_SA_KEY`: Your Google Cloud Service Account key (JSON format)
 
-## Deployment
+## Deployment Options
 
-### Render (Current)
+### Google Kubernetes Engine (GKE) - Current
 
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Configure the service:
-   - **Build Command**: `npm install`
-   - **Start Command**: `node app.js`
-   - **Node Version**: 18.x or higher
+The application is deployed to Google Kubernetes Engine for scalability and reliability:
 
-4. Add the following environment variables:
-   - `NODE_ENV`: production
-   - `CLOUD_NAME`: your_cloudinary_cloud_name
-   - `CLOUD_API_KEY`: your_cloudinary_api_key
-   - `CLOUD_API_SECRET`: your_cloudinary_api_secret
-   - `MAP_TOKEN`: your_mapbox_token
-   - `ATLASDB_URL`: your_mongodb_atlas_connection_string
-   - `SECRET`: your_session_secret
+1. **Managed Environment**: GKE handles Kubernetes control plane management
+2. **Auto-scaling**: Horizontal Pod Autoscaler adjusts replica count based on load
+3. **High Availability**: Multiple replicas ensure application uptime
+4. **Automated Updates**: CI/CD pipeline ensures seamless deployments
 
-5. Deploy your application
 
-### Alternative Platforms
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on deploying to:
-- Railway
-- DigitalOcean App Platform
-- AWS ECS
-- Google Cloud Run
+## Health Monitoring
 
-## MongoDB Atlas Setup
+The application includes a health endpoint at `/health` that returns the status, timestamp, and uptime of the service. This endpoint is used by Kubernetes for:
 
-1. Create a cluster on MongoDB Atlas
-2. Create a database user with read/write privileges
-3. Whitelist all IP addresses (0.0.0.0/0) or just Render's IPs
-4. Get your connection string and add it to the `.env` file
+- **Liveness Probe**: Verifies the application is running and responsive
+- **Readiness Probe**: Confirms the application is ready to handle requests
 
-## Project Structure 
+The health endpoint response format:
+```json
+{
+  "status": "OK",
+  "timestamp": "2023-09-24T12:34:56.789Z", 
+  "uptime": 3600
+}
+```
+
+## Project Structure
