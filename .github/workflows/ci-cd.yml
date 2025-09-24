@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: explorage-cluster
+  GKE_CLUSTER: explorage
   GKE_ZONE: us-central1-a
   NAMESPACE: explorage
   DEPLOYMENT_NAME: explorage-backend
@@ -68,8 +68,21 @@ jobs:
           version: '426.0.0'
 
       - name: Authenticate to GCP
+        env:
+          GKE_SA_KEY_JSON: ${{ secrets.GKE_SA_KEY }}
         run: |
-          echo "${{ secrets.GKE_SA_KEY }}" > gke-key.json
+          if [ -z "$GKE_SA_KEY_JSON" ]; then
+            echo "GKE_SA_KEY secret is empty or not set" >&2
+            exit 1
+          fi
+          # Write the JSON key safely preserving newlines
+          echo "$GKE_SA_KEY_JSON" | tr -d '\r' > gke-key.json
+          # Basic validation: ensure file contains a JSON key structure
+          if ! grep -q '"private_key_id"' gke-key.json; then
+            echo "Invalid service account JSON written to gke-key.json" >&2
+            head -n 5 gke-key.json >&2 || true
+            exit 1
+          fi
           gcloud auth activate-service-account --key-file=gke-key.json
           gcloud config set project ${{ env.PROJECT_ID }}
 
