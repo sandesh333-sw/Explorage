@@ -146,6 +146,13 @@ jobs:
             --from-literal=SECRET="${APP_SECRET}" \
             --dry-run=client -o yaml | kubectl apply -n "${{ env.NAMESPACE }}" -f -
 
+      - name: Apply Kubernetes manifests (ensure resources exist)
+        run: |
+          set -e
+          kubectl apply -f kubernetes/deployment.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f kubernetes/service.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f kubernetes/hpa.yaml -n ${{ env.NAMESPACE }}
+
       - name: Deploy to GKE
         run: |
           kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} backend=pulami/explorage:${{ github.sha }} -n ${{ env.NAMESPACE }}
