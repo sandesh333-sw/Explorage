@@ -59,26 +59,6 @@ jobs:
           push: true
           tags: pulami/explorage:latest,pulami/explorage:${{ github.sha }}
 
-      # Option 2: Use Google Container Registry (GCR)
-      # Uncomment these steps if you prefer using GCR instead of Docker Hub
-      #- name: Authenticate to Google Cloud
-      #  uses: google-github-actions/auth@v1
-      #  with:
-      #    credentials_json: ${{ secrets.GKE_SA_KEY }}
-      #
-      #- name: Set up Cloud SDK
-      #  uses: google-github-actions/setup-gcloud@v1
-      #
-      #- name: Configure Docker for GCR
-      #  run: gcloud auth configure-docker gcr.io
-      #
-      #- name: Build and push to GCR
-      #  uses: docker/build-push-action@v5
-      #  with:
-      #    context: .
-      #    push: true
-      #    tags: gcr.io/${{ env.PROJECT_ID }}/explorage:latest,gcr.io/${{ env.PROJECT_ID }}/explorage:${{ github.sha }}
-
   # Third job: Deploy to GKE
   deploy:
     needs: build-and-push
@@ -87,27 +67,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Fix: Updated version and explicitly using credentials_json
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GKE_SA_KEY }}
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+          
+      # Fix: Updated version for setup-gcloud  
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Set up GKE credentials
         run: |
           gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }} --project ${{ env.PROJECT_ID }}
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-
-      - name: Install GKE Auth Plugin
-        run: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
-          sudo apt-get update
-          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
 
       - name: Create namespace if needed
         run: |
@@ -130,9 +104,6 @@ jobs:
         run: |
           # Option 1: If using Docker Hub
           kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} backend=pulami/explorage:${{ github.sha }} -n ${{ env.NAMESPACE }}
-          
-          # Option 2: If using Google Container Registry (comment out Option 1 and uncomment this)
-          # kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} backend=gcr.io/${{ env.PROJECT_ID }}/explorage:${{ github.sha }} -n ${{ env.NAMESPACE }}
       
       - name: Verify deployment
         run: |
