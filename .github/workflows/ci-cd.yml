@@ -119,7 +119,7 @@ jobs:
             --from-literal=CLOUD_API_SECRET=${{ secrets.CLOUD_API_SECRET }} \
             --from-literal=MAP_TOKEN=${{ secrets.MAP_TOKEN }} \
             --from-literal=ATLASDB_URL=${{ secrets.ATLASDB_URL }} \
-            --from-literal=SECRET=${{ secrets.APP_SECRET }} \
+            --from-literal=SECRET=${{ secrets.SECRET }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to GKE
