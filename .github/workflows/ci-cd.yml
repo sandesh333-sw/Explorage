@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: explorage-cluster
+  GKE_CLUSTER: explorage
   GKE_ZONE: us-central1-a
   NAMESPACE: explorage
   DEPLOYMENT_NAME: explorage-backend
@@ -110,17 +110,24 @@ jobs:
         run: |
           kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create Kubernetes secrets
+      - name: Create or update Kubernetes secret
+        env:
+          CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
+          CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
+          CLOUD_API_SECRET: ${{ secrets.CLOUD_API_SECRET }}
+          MAP_TOKEN: ${{ secrets.MAP_TOKEN }}
+          ATLASDB_URL: ${{ secrets.ATLASDB_URL }}
+          APP_SECRET: ${{ secrets.SECRET }}
         run: |
-          kubectl create secret generic explorage-secrets \
-            --namespace=${{ env.NAMESPACE }} \
-            --from-literal=CLOUD_NAME=${{ secrets.CLOUD_NAME }} \
-            --from-literal=CLOUD_API_KEY=${{ secrets.CLOUD_API_KEY }} \
-            --from-literal=CLOUD_API_SECRET=${{ secrets.CLOUD_API_SECRET }} \
-            --from-literal=MAP_TOKEN=${{ secrets.MAP_TOKEN }} \
-            --from-literal=ATLASDB_URL=${{ secrets.ATLASDB_URL }} \
-            --from-literal=SECRET=${{ secrets.SECRET }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+          set -e
+          kubectl create secret generic explorage-secrets -n "${{ env.NAMESPACE }}" \
+            --from-literal=CLOUD_NAME="${CLOUD_NAME}" \
+            --from-literal=CLOUD_API_KEY="${CLOUD_API_KEY}" \
+            --from-literal=CLOUD_API_SECRET="${CLOUD_API_SECRET}" \
+            --from-literal=MAP_TOKEN="${MAP_TOKEN}" \
+            --from-literal=ATLASDB_URL="${ATLASDB_URL}" \
+            --from-literal=SECRET="${APP_SECRET}" \
+            --dry-run=client -o yaml | kubectl apply -n "${{ env.NAMESPACE }}" -f -
 
       - name: Deploy to GKE
         run: |
