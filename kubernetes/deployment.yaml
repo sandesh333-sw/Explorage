@@ -17,11 +17,13 @@ spec:
     spec:
       containers:
       - name: backend
-        # Image is updated by CI/CD pipeline kustomize
-        image: gcr.io/GKE_PROJECT/explorage:latest
+        image: docker.io/pulami/explorage:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        env:
+          - name: NODE_ENV
+            value: "production"
         envFrom:
         - secretRef:
             name: explorage-secrets

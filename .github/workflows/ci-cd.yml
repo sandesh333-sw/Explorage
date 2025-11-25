@@ -6,22 +6,15 @@ on:
   pull_request:
     branches: [ main ]
 
-env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: explorage-cluster
-  GKE_ZONE: us-central1-a
-  NAMESPACE: explorage
-  DEPLOYMENT_NAME: explorage-backend
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -40,7 +33,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -53,108 +46,22 @@ jobs:
         with:
           context: .
           push: true
-          tags: pulami/explorage:latest,pulami/explorage:${{ github.sha }}
+          tags: |
+            pulami/explorage:latest
+            pulami/explorage:${{ github.sha }}
 
   deploy:
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted]  
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          version: '426.0.0'
-
-      - name: Authenticate to GCP
-        env:
-          GKE_SA_KEY_JSON: ${{ secrets.GCP_SA_KEY }}
+      - name: Roll out new image on k3s
         run: |
-          if [ -z "$GKE_SA_KEY_JSON" ]; then
-            echo "GKE_SA_KEY secret is empty or not set" >&2
-            exit 1
-          fi
-          # Write the JSON key safely preserving newlines
-          echo "$GKE_SA_KEY_JSON" | tr -d '\r' > gke-key.json
-          # Basic validation: ensure file contains a JSON key structure
-          if ! grep -q '"private_key_id"' gke-key.json; then
-            echo "Invalid service account JSON written to gke-key.json" >&2
-            head -n 5 gke-key.json >&2 || true
-            exit 1
-          fi
-          gcloud auth activate-service-account --key-file=gke-key.json
-          gcloud config set project ${{ env.PROJECT_ID }}
+          # update deployment to use the new image tag
+          kubectl set image deployment/explorage-backend \
+            backend=pulami/explorage:${GITHUB_SHA} \
+            -n explorage
 
-      - name: Install GKE Auth Plugin
-        run: |
-          # Add Google Cloud SDK APT repo
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
-          # Import the Google Cloud public key
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
-          # Update and install plugin
-          sudo apt-get update
-          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
-
-      - name: Resolve cluster location
-        run: |
-          set -e
-          LOC=$(gcloud container clusters list --project "${{ env.PROJECT_ID }}" --format="value(location)" --filter="name=${{ env.GKE_CLUSTER }}")
-          if [ -z "$LOC" ]; then
-            echo "Cluster '${{ env.GKE_CLUSTER }}' not found in project '${{ env.PROJECT_ID }}'." >&2
-            gcloud container clusters list --project "${{ env.PROJECT_ID }}" --format="table(name,location,locationType,status)"
-            exit 1
-          fi
-          echo "Resolved cluster location: $LOC"
-          echo "CLUSTER_LOCATION=$LOC" >> $GITHUB_ENV
-
-      - name: Get GKE credentials
-        run: |
-          set -e
-          echo "Attempting regional get-credentials using location '$CLUSTER_LOCATION'..."
-          if ! gcloud container clusters get-credentials "${{ env.GKE_CLUSTER }}" --region "$CLUSTER_LOCATION" --project "${{ env.PROJECT_ID }}"; then
-            echo "Regional lookup failed. Trying zonal get-credentials..."
-            gcloud container clusters get-credentials "${{ env.GKE_CLUSTER }}" --zone "$CLUSTER_LOCATION" --project "${{ env.PROJECT_ID }}"
-          fi
-
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          sudo mv kubectl /usr/local/bin/
-
-      - name: Create namespace if needed
-        run: |
-          kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Create or update Kubernetes secret
-        env:
-          CLOUD_NAME: ${{ secrets.CLOUD_NAME }}
-          CLOUD_API_KEY: ${{ secrets.CLOUD_API_KEY }}
-          CLOUD_API_SECRET: ${{ secrets.CLOUD_API_SECRET }}
-          MAP_TOKEN: ${{ secrets.MAP_TOKEN }}
-          ATLASDB_URL: ${{ secrets.ATLASDB_URL }}
-          APP_SECRET: ${{ secrets.SECRET }}
-        run: |
-          set -e
-          kubectl create secret generic explorage-secrets -n "${{ env.NAMESPACE }}" \
-            --from-literal=CLOUD_NAME="${CLOUD_NAME}" \
-            --from-literal=CLOUD_API_KEY="${CLOUD_API_KEY}" \
-            --from-literal=CLOUD_API_SECRET="${CLOUD_API_SECRET}" \
-            --from-literal=MAP_TOKEN="${MAP_TOKEN}" \
-            --from-literal=ATLASDB_URL="${ATLASDB_URL}" \
-            --from-literal=SECRET="${APP_SECRET}" \
-            --dry-run=client -o yaml | kubectl apply -n "${{ env.NAMESPACE }}" -f -
-
-      - name: Apply Kubernetes manifests (ensure resources exist)
-        run: |
-          set -e
-          kubectl apply -f kubernetes/deployment.yaml -n ${{ env.NAMESPACE }}
-          kubectl apply -f kubernetes/service.yaml -n ${{ env.NAMESPACE }}
-          kubectl apply -f kubernetes/hpa.yaml -n ${{ env.NAMESPACE }}
-
-      - name: Deploy to GKE
-        run: |
-          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} backend=pulami/explorage:${{ github.sha }} -n ${{ env.NAMESPACE }}
-          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} -n ${{ env.NAMESPACE }}
-          echo "✅ Deployment successful! Your app is live."
+          # wait for rollout to finish
+          kubectl rollout status deployment/explorage-backend -n explorage
+          echo "✅ k3s rollout complete on Mac mini"
