@@ -4,17 +4,26 @@ metadata:
   name: explorage-ingress
   namespace: explorage
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    kubernetes.io/ingress.class: traefik
 spec:
-  tls:
   rules:
+    - host: explorage.pulami.co.uk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: explorage-backend-svc
+                port:
+                  number: 8080
     - host: explorage.local
       http:
         paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: explorage-backend-svc
-              port:
-                number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: explorage-backend-svc
+                port:
+                  number: 8080
