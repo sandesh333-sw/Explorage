@@ -3,10 +3,15 @@ if (process.env.NODE_ENV !== "production") {
     require("dotenv").config();
 }
 
-console.log("SECRET from env:", process.env.SECRET);
+console.log("SECRET from env:", process.env.SECRET ? "✓ Loaded" : "✗ Missing");
 
 const express = require("express");
 const app = express();
+
+// Trust proxy - Required for Cloudflare/reverse proxy setups
+// This ensures secure cookies work correctly behind Cloudflare
+app.set('trust proxy', 1);
+
 const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
@@ -53,6 +58,10 @@ store.on("error", (err) => {
   console.log("Error in MONGO SESSION STORE", err);
 });
 
+// Detect if running in Kubernetes (production) or locally
+const isProduction = process.env.KUBERNETES_SERVICE_HOST !== undefined || 
+                     (process.env.NODE_ENV === "production" && process.env.LOCAL_DEV !== "true");
+
 const sessionOptions = {
   store,
   name: "session",
@@ -63,7 +72,9 @@ const sessionOptions = {
     expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production"
+    // Secure cookies only in production with HTTPS
+    // If your domain doesn't have HTTPS yet, this will still work (secure: false in that case)
+    secure: isProduction && process.env.FORCE_HTTP !== "true"
   }
 };
 
@@ -83,16 +94,6 @@ app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
   next();
-});
-
-// Test route
-app.get("/demeuser", async (req, res) => {
-  let fakeUser = new User({
-    email: "student@gmail.com",
-    username: "delta"
-  });
-  let registeredUser = await User.register(fakeUser, "hellohaii");
-  res.send(registeredUser);
 });
 
 // Redirect root

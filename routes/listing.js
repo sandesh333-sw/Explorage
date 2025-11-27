@@ -38,9 +38,4 @@ router.put("/:id", isLoggedIn, isOwner,upload.single('listing[image]'), validate
 //Delete Route-show.ejs
 router.delete("/:id",isLoggedIn, isOwner, wrapAsync(listingController.destroy));
 
-//Search Route
-router.get("/search", wrapAsync(listingController.searchListings));
-
- 
-
 module.exports = router;

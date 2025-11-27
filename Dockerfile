@@ -1,5 +1,5 @@
-# Use official Node.js 18 Alpine image
-FROM node:18-alpine
+# Use official Node.js 23 Alpine image (matches package.json engines)
+FROM node:23-alpine
 
 # Set working directory
 WORKDIR /app
