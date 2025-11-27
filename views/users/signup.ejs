@@ -1,12 +1,10 @@
 <% layout("/layouts/boilerplate") %>
-<div class="row mt-3">
-    <div class="col-6 offset-2 d-flex align-items-center">
-        <h1 class="me-2">SignUp for Explorage</h1>
-        <a class="navbar-brand">
-            <i class="fa-solid fa-hotel"></i>
-        </a>
-    </div>
-    <div class="col-6 offset-2">
+<div class="row mt-3 justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="d-flex align-items-center mb-3">
+            <h1 class="me-2">SignUp for Explorage</h1>
+            <i class="fa-solid fa-hotel fs-2"></i>
+        </div>
         <form action="/signup" method="POST" class="needs-validation" novalidate>
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
@@ -39,7 +37,7 @@
                     required
                 />
             </div>
-            <button class="btn btn-success">SignUp</button>
+            <button class="btn btn-success w-100">SignUp</button>
         </form>
     </div>
 </div>

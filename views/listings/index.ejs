@@ -10,24 +10,25 @@
     </div>
 </div>
 
-<div class="row row-cols-lg-3 row-cols-md-3 row-cols-sm-1 mt-3">
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3 mt-2">
     <% for(let listing of allListings) { %>
-        <a href="/listings/<%= listing._id %>" class="listing-link">
-            <div class="card col">
-                <img 
-                    src="<%= listing.image.url %>" 
-                    class="card-img-top" 
-                    alt="listing_image" 
-                    style="height: 20rem;" 
-                />
-                <div class="card-img-overlay"></div>
-                <div class="card-body">
-                    <p class="card-text">
-                        <b><%= listing.title %></b> <br>
-                        £<%= listing.price %> / night <br>
-                    </p>
+        <div class="col">
+            <a href="/listings/<%= listing._id %>" class="listing-link text-decoration-none">
+                <div class="card h-100">
+                    <img 
+                        src="<%= listing.image.url %>" 
+                        class="card-img-top" 
+                        alt="listing_image" 
+                        style="height: 15rem; object-fit: cover;" 
+                    />
+                    <div class="card-body">
+                        <p class="card-text">
+                            <b><%= listing.title %></b> <br>
+                            <span class="text-muted">£<%= listing.price %> / night</span>
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+        </div>
     <% } %>
 </div>
