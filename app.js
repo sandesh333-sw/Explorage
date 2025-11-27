@@ -75,7 +75,8 @@ const sessionOptions = {
     // Secure cookies only in production with HTTPS
     // If your domain doesn't have HTTPS yet, this will still work (secure: false in that case)
     secure: isProduction && process.env.FORCE_HTTP !== "true",
-    sameSite: 'Lax'
+    sameSite: "none",
+    secure: true
   }
 };
 
