@@ -1,6 +1,6 @@
 // Load .env only in local development, NOT in Kubernetes
 if (process.env.NODE_ENV !== "production") {
-    require("dotenv").config();
+  require("dotenv").config();
 }
 
 console.log("SECRET from env:", process.env.SECRET ? "✓ Loaded" : "✗ Missing");
@@ -59,26 +59,25 @@ store.on("error", (err) => {
 });
 
 // Detect if running in Kubernetes (production) or locally
-const isProduction = process.env.KUBERNETES_SERVICE_HOST !== undefined || 
-                     (process.env.NODE_ENV === "production" && process.env.LOCAL_DEV !== "true");
+const isProduction = process.env.KUBERNETES_SERVICE_HOST !== undefined ||
+  (process.env.NODE_ENV === "production" && process.env.LOCAL_DEV !== "true");
 
 const sessionOptions = {
   store,
   name: "session",
   secret,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    // Secure cookies only in production with HTTPS
-    // If your domain doesn't have HTTPS yet, this will still work (secure: false in that case)
-    secure: isProduction && process.env.FORCE_HTTP !== "true",
+    secure: true,
     sameSite: "none",
-    secure: true
+    domain: "explorage.pulami.co.uk",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60 * 1000
   }
 };
+
 
 app.use(session(sessionOptions));
 app.use(flash());
