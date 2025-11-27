@@ -35,10 +35,12 @@ const dbUrl = process.env.ATLASDB_URL;
 // Fallback only for local development
 const secret = process.env.SECRET || "thisshouldbeabettersecret";
 
-// Connect to MongoDB
-mongoose.connect(dbUrl)
-  .then(() => console.log("connected to DB"))
-  .catch(err => console.log("MongoDB connection error:", err));
+// Connect to MongoDB (skip in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  mongoose.connect(dbUrl)
+    .then(() => console.log("connected to DB"))
+    .catch(err => console.log("MongoDB connection error:", err));
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -130,6 +132,13 @@ app.use((err, req, res, next) => {
 
 // Server
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
-});
+
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+  });
+}
+
+// Export app for testing
+module.exports = app;
