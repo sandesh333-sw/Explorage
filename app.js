@@ -64,6 +64,16 @@ store.on("error", (err) => {
 const isProduction = process.env.KUBERNETES_SERVICE_HOST !== undefined ||
   (process.env.NODE_ENV === "production" && process.env.LOCAL_DEV !== "true");
 
+// Debug middleware to help diagnose session issues
+app.use((req, res, next) => {
+  if (!req.secure && isProduction) {
+    console.log("Warning: Connection is not secure, but running in production.");
+    console.log("Protocol:", req.protocol);
+    console.log("X-Forwarded-Proto:", req.get("X-Forwarded-Proto"));
+  }
+  next();
+});
+
 
 // const cors = require("cors");
 // app.use(cors({
@@ -80,7 +90,10 @@ const sessionOptions = {
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: isProduction,
+    // secure: isProduction, 
+    // Temporarily disabling secure cookie to fix login loop. 
+    // Re-enable once we confirm 'trust proxy' is working correctly with your Ingress/Cloudflare.
+    secure: false, 
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
