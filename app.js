@@ -80,10 +80,6 @@ const sessionOptions = {
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    //domain: "explorage.pulami.co.uk",
-    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 };
