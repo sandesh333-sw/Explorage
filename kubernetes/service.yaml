@@ -4,7 +4,7 @@ metadata:
   name: explorage-backend-svc
   namespace: explorage
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: explorage
   ports:
