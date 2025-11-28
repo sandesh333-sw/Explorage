@@ -9,8 +9,8 @@ const express = require("express");
 const app = express();
 
 // Trust proxy - Required for Cloudflare/reverse proxy setups
-// This ensures secure cookies work correctly behind Cloudflare
-app.set('trust proxy', 1);
+// This ensures secure cookies work correctly behind Cloudflare and K8s Ingress
+app.set('trust proxy', true);
 
 const mongoose = require("mongoose");
 const path = require("path");
@@ -80,6 +80,8 @@ const sessionOptions = {
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
+    secure: isProduction,
+    sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
 };
