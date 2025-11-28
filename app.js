@@ -64,6 +64,14 @@ store.on("error", (err) => {
 const isProduction = process.env.KUBERNETES_SERVICE_HOST !== undefined ||
   (process.env.NODE_ENV === "production" && process.env.LOCAL_DEV !== "true");
 
+
+const cors = require("cors");
+app.use(cors({
+  origin: "https://explorage.pulami.co.uk",
+  credentials: true
+}));
+
+
 const sessionOptions = {
   store,
   name: "session",
@@ -74,7 +82,7 @@ const sessionOptions = {
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    domain: "explorage.pulami.co.uk",
+    domain: ".explorage.pulami.co.uk",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000
   }
