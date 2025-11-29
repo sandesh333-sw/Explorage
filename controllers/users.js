@@ -32,7 +32,15 @@ module.exports.renderLogIn = (req, res) => {
 module.exports.logIn = async (req, res) => {
     req.flash("success", "Welcome to Explorage! You are logged in!");
     let redirectUrl = res.locals.redirectUrl || "/listings";
-    res.redirect(redirectUrl);
+    
+    // Manually save session before redirecting to ensure cookie is set
+    req.session.save((err) => {
+        if (err) {
+            console.log("Session save error:", err);
+            return res.redirect("/login");
+        }
+        res.redirect(redirectUrl);
+    });
 };
 
 module.exports.logOut = (req, res, next) => {
